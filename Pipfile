@@ -9,8 +9,10 @@ autopep8 = "*"
 flake8 = "*"
 moto = "*"
 boto3 = "*"
+botostubs = "*"
 
 [packages]
+botostubs = "*"
 
 [requires]
 python_version = "3.8"

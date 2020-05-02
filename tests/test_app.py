@@ -12,6 +12,10 @@ def test_get_objectinfo(s3event):
 
 
 def test_get_object(s3_setup):
-    client, bucket, key, body = s3_setup
-    decoded = json.loads(body)
-    assert app.get_object(client, bucket, key) == decoded
+    bucket, key, body = s3_setup
+    assert app.get_object(bucket, key) == body
+
+
+def test_read_json(sample_object, sample_sourcefile):
+    _, _, body = sample_object
+    assert app.read_json(body) == sample_sourcefile
