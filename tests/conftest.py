@@ -1,4 +1,6 @@
+import boto3
 import pytest
+from moto import mock_s3
 
 
 @pytest.fixture()
@@ -43,3 +45,28 @@ def s3event():
             }
         ]
     }
+
+
+@pytest.fixture()
+def s3_setup():
+    bucket_name = 'kcbs-buy-book-kcbsjsoninputbucket'
+    object_key = '200501_180827_505.json'
+    client = boto3.client('s3')
+    body = '{"created_date":"2020-05-01 18:42:24","books":[{"repair_times":0,"enchantments":[{"enchantment":"minecraft:flame","level":1}]},{"repair_times":0,"enchantments":[{"enchantment":"minecraft:quick_charge","level":1}]},{"repair_times":0,"enchantments":[{"enchantment":"minecraft:bane_of_arthropods","level":3},{"enchantment":"minecraft:efficiency","level":3}]}]}'
+
+    mock = mock_s3()
+    mock.start()
+    client.create_bucket(
+        Bucket=bucket_name,
+        CreateBucketConfiguration={
+            'LocationConstraint': 'ap-northeast-1'
+        }
+    )
+    client.put_object(
+        Bucket=bucket_name,
+        Key=object_key,
+        Body=body
+    )
+
+    yield client, bucket_name, object_key, body
+    mock.stop()

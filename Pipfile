@@ -7,6 +7,8 @@ verify_ssl = true
 pytest = "*"
 autopep8 = "*"
 flake8 = "*"
+moto = "*"
+boto3 = "*"
 
 [packages]
 
