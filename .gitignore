@@ -246,3 +246,4 @@ $RECYCLE.BIN/
 
 Pipfile.lock
 .vscode
+samconfig.toml
