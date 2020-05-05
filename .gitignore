@@ -247,3 +247,4 @@ $RECYCLE.BIN/
 Pipfile.lock
 .vscode
 samconfig.toml
+buy_book/data/prices.json
