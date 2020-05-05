@@ -1,4 +1,4 @@
-from buy_book import app
+from buy_book import app, SourceFile
 import json
 
 
@@ -18,4 +18,34 @@ def test_get_object(s3_setup):
 
 def test_read_json(sample_object, sample_sourcefile):
     _, _, body = sample_object
-    assert app.read_json(body) == sample_sourcefile
+    actually = app.read_json(body)
+    assert actually == sample_sourcefile
+
+
+def test_get_prices(sample_prices):
+    actually = sample_prices
+    assert actually == app.get_prices("tests/testdata/example_prices.json")
+
+
+def test_set_prices(sample_sourcefile, sample_prices, source_after_price):
+    sf = app.set_prices(sample_sourcefile, sample_prices)
+    assert sf == source_after_price
+
+    excepted_total = [2, 3]
+    actually_total = []
+    for book in sf.books:
+        total = book.get_total_price()
+        actually_total.append(total)
+    assert actually_total == excepted_total
+
+
+def test_get_total_sold_price(sample_sourcefile, sample_prices):
+    sf = app.set_prices(sample_sourcefile, sample_prices)
+    excepted = int(2 * 0.8 + 3 * 1.0)
+    assert app.get_total_sold_price(sf) == excepted
+
+
+def test_get_total_buy_price(sample_sourcefile, sample_prices):
+    sf = app.set_prices(sample_sourcefile, sample_prices)
+    excepted = int((2 * 0.8 + 3 * 1.0) * 0.5)
+    assert app.get_total_buy_price(sf) == excepted

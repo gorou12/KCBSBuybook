@@ -11,7 +11,7 @@ from buy_book.SourceFile import SourceFile, Book, Enchantment
 def sample_object():
     bucket_name = 'kcbs-buy-book-kcbsjsoninputbucket'
     object_key = '200501_180827_505.json'
-    body = '{"created_date":"2020-05-01 18:42:24","books":[{"repair_times":0,"enchantments":[{"enchantment":"minecraft:flame","level":1}]},{"repair_times":0,"enchantments":[{"enchantment":"minecraft:quick_charge","level":1}]},{"repair_times":0,"enchantments":[{"enchantment":"minecraft:bane_of_arthropods","level":3},{"enchantment":"minecraft:efficiency","level":3}]}]}'
+    body = '{"created_date": "2020-05-01 18:42:24","books": [{"repair_times": 1,"enchantments": [{"enchantment": "minecraft:protection","level": 2},{"enchantment": "minecraft:sharpness","level": 2}]},{"repair_times": 0,"enchantments": [{"enchantment": "minecraft:blast_protection","level": 2}]}]}'
     yield bucket_name, object_key, body
 
 
@@ -88,7 +88,7 @@ def s3_setup(sample_object):
 def sample_sourcefile():
     sourceFile = SourceFile(
         {
-            "created_date": "2020-05-01 18:08:27",
+            "created_date": "2020-05-01 18:42:24",
             "books": [
                 {
                     "repair_times": 1,
@@ -117,3 +117,70 @@ def sample_sourcefile():
     )
 
     yield sourceFile
+
+
+@pytest.fixture
+def sample_prices():
+    yield {
+        "metadata": {
+            "version": "0",
+            "date": "20200101"
+        },
+        "prices": [
+            {
+                "japanese": "ダメージ軽減",
+                "id": "protection",
+                "price": [0, 1, 0, 0],
+                "fit": ["A"]
+            }, {
+                "japanese": "爆発耐性",
+                "id": "blast_protection",
+                "price": [0, 3, 0, 0],
+                "fit": ["A", "C"]
+            }, {
+                "japanese": "ダメージ増加",
+                "id": "sharpness",
+                "price": [0, 2, 0, 0, 0],
+                "fit": ["B"]
+            }
+        ]
+    }
+
+
+@pytest.fixture
+def source_after_price():
+    yield SourceFile(
+        {
+            "created_date": "2020-05-01 18:42:24",
+            "books": [
+                {
+                    "repair_times": 1,
+                    "enchantments": [
+                        {
+                            "enchantment": "minecraft:protection",
+                            "level": 2,
+                            "price": 1,
+                            "fit_tool": ['A']
+                        },
+                        {
+                            "enchantment": "minecraft:sharpness",
+                            "level": 2,
+                            "price": 2,
+                            "fit_tool": ['B']
+                        }
+                    ]
+                },
+                {
+                    "repair_times": 0,
+                    "enchantments": [
+                        {
+                            "enchantment": "minecraft:blast_protection",
+                            "level": 2,
+                            "price": 3,
+                            "fit_tool": ['A', 'C']
+                        }
+                    ]
+                }
+            ]
+        }
+    )
