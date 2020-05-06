@@ -20,7 +20,7 @@ def lambda_handler(event, context):
     prices = get_prices(prices_json_path)
     sourceFile = set_prices(sourceFile, prices)
     receipt, sold_p, buy_p = create_receipt(sourceFile)
-    url = put_to_bucket(receipt)
+    _, url = put_to_bucket(receipt)
 
     send_to_discord(sold_p, buy_p, url)
 
@@ -109,9 +109,9 @@ def put_to_bucket(content: str) -> str:
 
     s3_resource = boto3.resource('s3')
     obj = s3_resource.Object(bucket, key)
-    obj.put(Body=content)
+    obj.put(Body=content, ACL='public-read')
 
-    return key, f"{url}/{key}"
+    return key, f"https://{url}/{key}"
 
 
 def send_to_discord(sold_price: int, buy_price: int, url: str):

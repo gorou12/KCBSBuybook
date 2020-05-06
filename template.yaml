@@ -16,7 +16,7 @@ Resources:
       Environment:
         Variables:
           OUTPUT_BUCKET_NAME: !Ref KCBSOutputBucket
-          OUTPUT_BUCKET_ENDPOINT: !GetAtt KCBSOutputBucket.WebsiteURL
+          OUTPUT_BUCKET_ENDPOINT: !GetAtt KCBSOutputBucket.DomainName
           DISCORD_ENDPOINT: '{{resolve:ssm:kcbsbuybook.discordendpoint:1}}'
       Events:
         JSONInput:
