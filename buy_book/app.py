@@ -116,8 +116,10 @@ def put_to_bucket(content: str) -> str:
 
 def send_to_discord(sold_price: int, buy_price: int, url: str):
     endpoint = os.environ['DISCORD_ENDPOINT']
-    msg = (f"計算終了しました。\r販売点数：{sold_price}\r買取点数：{buy_price}"
-           f"\r詳細：{url}")
+    msg = (f"計算終了しました。\r"
+           f"販売点数：{sold_price}\r"
+           f"買取点数：{buy_price}\r"
+           f"詳細：{url}")
     headers = {
         "Content-Type": "application/json"
     }
