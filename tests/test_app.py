@@ -47,5 +47,5 @@ def test_get_total_sold_price(sample_sourcefile, sample_prices):
 
 def test_get_total_buy_price(sample_sourcefile, sample_prices):
     sf = app.set_prices(sample_sourcefile, sample_prices)
-    excepted = int((2 * 0.8 + 3 * 1.0) * 0.5)
+    excepted = int((2 * 0.8) * 0.5) + int((3 * 1.0) * 0.5)
     assert app.get_total_buy_price(sf) == excepted

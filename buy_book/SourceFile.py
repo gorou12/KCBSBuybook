@@ -8,7 +8,9 @@ BUY_PRICE_MULTIPLIER: float = 0.5
 class SourceFile():
     created_date: datetime.datetime = None
     books: list = []
+    price_meta: dict = {}
     total_sold_price: int = 0
+    total_buy_price: int = 0
 
     def __init__(self, _dict: dict):
         super().__init__()
@@ -39,6 +41,7 @@ class SourceFile():
 
     def set_prices(self, prices: dict):
         self.books = [i.set_prices(prices['prices']) for i in self.books]
+        self.price_meta = prices['metadata']
         return self
 
     def get_total_sold_price(self) -> int:
@@ -47,9 +50,9 @@ class SourceFile():
         return self.total_sold_price
 
     def get_total_buy_price(self) -> int:
-        if self.total_sold_price == 0:
-            self.get_total_sold_price()
-        return int(self.total_sold_price * BUY_PRICE_MULTIPLIER)
+        if self.total_buy_price == 0:
+            self.total_buy_price = sum([i.get_buy_price() for i in self.books])
+        return self.total_buy_price
 
 
 class Book():
@@ -103,6 +106,12 @@ class Book():
             self.get_total_price()
         multiply: float = 1 if (self.repair_times == 0) else self.repair_times * REPAIR_TIMES_MULTIPLIER
         return int(self.total_price * multiply)
+
+    def get_buy_price(self) -> int:
+        if self.total_price == 0:
+            self.get_total_price()
+        multiply: float = 1 if (self.repair_times == 0) else self.repair_times * REPAIR_TIMES_MULTIPLIER
+        return int(self.total_price * multiply * BUY_PRICE_MULTIPLIER)
 
 
 class Enchantment:
