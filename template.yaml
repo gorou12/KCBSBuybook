@@ -11,8 +11,7 @@ Resources:
   KCBSBuyBookFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: buy_book/
-      Handler: app.lambda_handler
+      Handler: buy_book.app.lambda_handler
       Runtime: python3.8
       Environment:
         Variables:
@@ -25,6 +24,7 @@ Resources:
           Properties:
             Bucket: !Ref KCBSJsonInputBucket
             Events: "s3:ObjectCreated:*"
+      Role: !GetAtt KCBSBuyBookRole.Arn
 
   KCBSJsonInputBucket:
     Type: AWS::S3::Bucket
@@ -35,3 +35,20 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: PublicRead
+
+  KCBSBuyBookRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+        - 'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
