@@ -13,6 +13,7 @@ botostubs = "*"
 
 [packages]
 botostubs = "*"
+requests = "*"
 
 [requires]
 python_version = "3.8"

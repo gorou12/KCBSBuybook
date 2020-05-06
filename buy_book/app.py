@@ -2,6 +2,7 @@ import os
 import json
 import time
 import boto3
+import requests
 import urllib.request
 from datetime import datetime
 
@@ -116,7 +117,7 @@ def put_to_bucket(content: str) -> str:
 def send_to_discord(sold_price: int, buy_price: int, url: str):
     endpoint = os.environ['DISCORD_ENDPOINT']
     msg = (f"計算終了しました。\r販売点数：{sold_price}\r買取点数：{buy_price}"
-           f"詳細：{url}")
+           f"\r詳細：{url}")
     headers = {
         "Content-Type": "application/json"
     }
@@ -124,8 +125,8 @@ def send_to_discord(sold_price: int, buy_price: int, url: str):
         "content": msg
     }
 
-    req = urllib.request.Request(endpoint, json.dumps(content).encode(), headers)
-    with urllib.request.urlopen(req) as res:
-        body = res.read()
+    body = requests.post(url=endpoint,
+                         data=json.dumps(content).encode(),
+                         headers=headers)
 
     return body
