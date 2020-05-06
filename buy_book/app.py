@@ -94,8 +94,9 @@ def create_receipt(sf: SourceFile) -> str:
     for book in sf.books:
         enc_l = [i.japanese + str(i.level) for i in book.enchantments]
         sold_price = book.get_sold_price()
+        repair_times = book.repair_times
         receipt_l.append(", ".join(enc_l))
-        receipt_l.append(f"└ 基礎点：{sold_price}点")
+        receipt_l.append(f"└ 合成：{repair_times}回, 基礎点：{sold_price}点")
 
     receipt_l.append("--------以上")
 
