@@ -1,8 +1,11 @@
+import os
 import json
+import time
 import boto3
-import botostubs
+import urllib.request
+from datetime import datetime
 
-from buy_book.SourceFile import SourceFile, Book, Enchantment
+from buy_book.SourceFile import SourceFile
 
 client = boto3.client('s3')
 prices_json_path = "buy_book/data/prices.json"
@@ -10,10 +13,16 @@ prices_json_path = "buy_book/data/prices.json"
 
 def lambda_handler(event, context):
     """Lambda handler."""
-    print(event)
     bucket_name, object_key = get_objectinfo(event)
     json_str = get_object(bucket_name, object_key)
     sourceFile = read_json(json_str)
+    prices = get_prices(prices_json_path)
+    sourceFile = set_prices(sourceFile, prices)
+    receipt, sold_p, buy_p = create_receipt(sourceFile)
+    url = put_to_bucket(receipt)
+
+    send_to_discord(sold_p, buy_p, url)
+
     return
 
 
@@ -62,3 +71,61 @@ def get_total_sold_price(sf: SourceFile) -> int:
 
 def get_total_buy_price(sf: SourceFile) -> int:
     return sf.get_total_buy_price()
+
+
+def create_receipt(sf: SourceFile) -> str:
+    created_date = datetime.strftime(sf.created_date, "%Y-%m-%d %H:%M")
+    metadata_date = sf.price_meta.get('date')
+    total_sold = get_total_sold_price(sf)
+    total_buy = get_total_buy_price(sf)
+
+    receipt_l = [
+        f"読み取り日時：{created_date}",
+        f"適用価格日付：{metadata_date}",
+        f"",
+        f"＜ 読 取 ＞",
+        f"合計販売点：{total_sold}点",
+        f"合計買取点：{total_buy}点",
+        f"※買取点は10点で1ダイヤ相当です",
+        f"--------内訳",
+    ]
+
+    for book in sf.books:
+        enc_l = [i.japanese + str(i.level) for i in book.enchantments]
+        sold_price = book.get_sold_price()
+        receipt_l.append(", ".join(enc_l))
+        receipt_l.append(f"└ 基礎点：{sold_price}点")
+
+    receipt_l.append("--------以上")
+
+    return '\r\n'.join(receipt_l), total_sold, total_buy
+
+
+def put_to_bucket(content: str) -> str:
+    bucket = os.environ['OUTPUT_BUCKET_NAME']
+    url = os.environ['OUTPUT_BUCKET_ENDPOINT']
+    key = str(int(time.time())) + ".txt"
+
+    s3_resource = boto3.resource('s3')
+    obj = s3_resource.Object(bucket, key)
+    obj.put(Body=content)
+
+    return key, f"{url}/{key}"
+
+
+def send_to_discord(sold_price: int, buy_price: int, url: str):
+    endpoint = os.environ['DISCORD_ENDPOINT']
+    msg = (f"計算終了しました。\r販売点数：{sold_price}\r買取点数：{buy_price}"
+           f"詳細：{url}")
+    headers = {
+        "Content-Type": "application/json"
+    }
+    content = {
+        "content": msg
+    }
+
+    req = urllib.request.Request(endpoint, json.dumps(content).encode(), headers)
+    with urllib.request.urlopen(req) as res:
+        body = res.read()
+
+    return body

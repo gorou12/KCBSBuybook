@@ -119,6 +119,7 @@ class Enchantment:
     level: int = -1
     price: int = 0
     fit_tool: list = []
+    japanese: str = ""
 
     def __init__(self, _dict: dict):
         super().__init__()
@@ -152,6 +153,7 @@ class Enchantment:
                 continue
             self.price = item['price'][self.level - 1]
             self.fit_tool = item.get('fit', [])
+            self.japanese = item.get('japanese', "")
         return self
 
     def get_price(self):

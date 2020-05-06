@@ -1,10 +1,8 @@
 import boto3
 import pytest
-import datetime
-import botostubs
 from moto import mock_s3
 
-from buy_book.SourceFile import SourceFile, Book, Enchantment
+from buy_book.SourceFile import SourceFile
 
 
 @pytest.fixture()
@@ -66,8 +64,8 @@ def s3_setup(sample_object):
 
     mock = mock_s3()
     mock.start()
-    s3: botostubs.S3 = boto3.resource('s3')
-    bucket: botostubs.S3 = s3.create_bucket(
+    s3 = boto3.resource('s3')
+    bucket = s3.create_bucket(
         Bucket=bucket_name,
         CreateBucketConfiguration={
             'LocationConstraint': 'ap-northeast-1'
@@ -81,6 +79,22 @@ def s3_setup(sample_object):
     )
 
     yield bucket_name, object_key, body
+    mock.stop()
+
+
+@pytest.fixture()
+def put_s3_setup():
+    mock = mock_s3()
+    mock.start()
+    s3 = boto3.resource('s3')
+
+    yield s3.create_bucket(
+        Bucket="KCBSOutputBucket",
+        CreateBucketConfiguration={
+            'LocationConstraint': 'ap-northeast-1'
+        }
+    )
+
     mock.stop()
 
 
@@ -184,3 +198,22 @@ def source_after_price():
             ]
         }
     )
+
+
+@pytest.fixture
+def example_receipt():
+    yield '\r\n'.join([
+        "読み取り日時：2020-05-01 18:42",
+        "適用価格日付：20200101",
+        "",
+        "＜ 読 取 ＞",
+        "合計販売点：4点",
+        "合計買取点：1点",
+        "※買取点は10点で1ダイヤ相当です",
+        "--------内訳",
+        "ダメージ軽減2, ダメージ増加2",
+        "└ 基礎点：1点",
+        "爆発耐性2",
+        "└ 基礎点：3点",
+        "--------以上"
+    ])

@@ -1,5 +1,5 @@
-from buy_book import app, SourceFile
-import json
+import os
+from buy_book import app
 
 
 def test_get_objectinfo(s3event):
@@ -49,3 +49,18 @@ def test_get_total_buy_price(sample_sourcefile, sample_prices):
     sf = app.set_prices(sample_sourcefile, sample_prices)
     excepted = int((2 * 0.8) * 0.5) + int((3 * 1.0) * 0.5)
     assert app.get_total_buy_price(sf) == excepted
+
+
+def test_create_receipt(sample_sourcefile, sample_prices, example_receipt):
+    sf = app.set_prices(sample_sourcefile, sample_prices)
+    actually, _, _ = app.create_receipt(sf)
+    assert actually == example_receipt
+
+
+def test_put_to_bucket(put_s3_setup):
+    os.environ['OUTPUT_BUCKET_NAME'] = "KCBSOutputBucket"
+    os.environ['OUTPUT_BUCKET_ENDPOINT'] = "example.com"
+    example_content = "hogehoge"
+    key, _ = app.put_to_bucket("hogehoge")
+    obj = put_s3_setup.Object(key).get()
+    assert obj['Body'].read().decode('utf-8') == example_content

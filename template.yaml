@@ -14,6 +14,11 @@ Resources:
       CodeUri: buy_book/
       Handler: app.lambda_handler
       Runtime: python3.8
+      Environment:
+        Variables:
+          OUTPUT_BUCKET_NAME: !Ref KCBSOutputBucket
+          OUTPUT_BUCKET_ENDPOINT: !GetAtt KCBSOutputBucket.WebsiteURL
+          DISCORD_ENDPOINT: '{{resolve:ssm:kcbsbuybook.discordendpoint:1}}'
       Events:
         JSONInput:
           Type: S3 # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -25,3 +30,8 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: Private
+
+  KCBSOutputBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
