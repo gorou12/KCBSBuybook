@@ -110,7 +110,7 @@ def put_to_bucket(content: str) -> str:
 
     s3_resource = boto3.resource('s3')
     obj = s3_resource.Object(bucket, key)
-    obj.put(Body=content, ACL='public-read', ContentType='text/plain')
+    obj.put(Body=content, ACL='public-read', ContentType='text/plain;charset=utf-8')
 
     return key, f"https://{url}/{key}"
 
