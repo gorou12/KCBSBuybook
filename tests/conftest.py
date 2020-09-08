@@ -9,7 +9,7 @@ from buy_book.SourceFile import SourceFile
 def sample_object():
     bucket_name = 'kcbs-buy-book-kcbsjsoninputbucket'
     object_key = '200501_180827_505.json'
-    body = '{"created_date": "2020-05-01 18:42:24","books": [{"repair_times": 1,"enchantments": [{"enchantment": "minecraft:protection","level": 2},{"enchantment": "minecraft:sharpness","level": 2}]},{"repair_times": 0,"enchantments": [{"enchantment": "minecraft:blast_protection","level": 2}]}]}'
+    body = '{"created_date": "2020-05-01 18:42:24","books": [{"item_type":"enchanted_book","repair_times": 1,"enchantments": [{"enchantment": "minecraft:protection","level": 2},{"enchantment": "minecraft:sharpness","level": 2}]},{"item_type":"enchanted_book","repair_times": 0,"enchantments": [{"enchantment": "minecraft:blast_protection","level": 2}]},{"item_type":"eco_egg","count":16}]}'
     yield bucket_name, object_key, body
 
 
@@ -105,6 +105,7 @@ def sample_sourcefile():
             "created_date": "2020-05-01 18:42:24",
             "books": [
                 {
+                    "item_type": "enchanted_book",
                     "repair_times": 1,
                     "enchantments": [
                         {
@@ -118,6 +119,7 @@ def sample_sourcefile():
                     ]
                 },
                 {
+                    "item_type": "enchanted_book",
                     "repair_times": 0,
                     "enchantments": [
                         {
@@ -125,6 +127,10 @@ def sample_sourcefile():
                             "level": 2
                         }
                     ]
+                },
+                {
+                    "item_type": "eco_egg",
+                    "count": 16
                 }
             ]
         }
@@ -156,6 +162,11 @@ def sample_prices():
                 "id": "sharpness",
                 "price": [0, 2, 0, 0, 0],
                 "fit": ["B"]
+            }, {
+                "japanese": "魔道書「えこたまご」",
+                "id": "eco_egg",
+                "price": [10],
+                "fit": ["ECE"]
             }
         ]
     }
@@ -168,6 +179,7 @@ def source_after_price():
             "created_date": "2020-05-01 18:42:24",
             "books": [
                 {
+                    "item_type": "enchanted_book",
                     "repair_times": 1,
                     "enchantments": [
                         {
@@ -185,6 +197,7 @@ def source_after_price():
                     ]
                 },
                 {
+                    "item_type": "enchanted_book",
                     "repair_times": 0,
                     "enchantments": [
                         {
@@ -194,7 +207,13 @@ def source_after_price():
                             "fit_tool": ['A', 'C']
                         }
                     ]
+                },
+                {
+                    "item_type": "eco_egg",
+                    "count": 16,
+                    "unit_price": 10
                 }
+
             ]
         }
     )
@@ -207,13 +226,15 @@ def example_receipt():
         "適用価格日付：20200101",
         "",
         "＜ 読 取 ＞",
-        "合計販売点：4点",
-        "合計買取点：1点",
+        "合計販売点：164点",
+        "合計買取点：81点",
         "※買取点は10点で1ダイヤ相当です",
         "--------内訳",
         "ダメージ軽減2, ダメージ増加2",
         "└ 合成：1回, 基礎点：1点",
         "爆発耐性2",
         "└ 合成：0回, 基礎点：3点",
+        "魔道書「えこたまご」",
+        "└ 冊数：16冊, 基礎点：160点",
         "--------以上"
     ])

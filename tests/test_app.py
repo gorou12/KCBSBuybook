@@ -31,7 +31,7 @@ def test_set_prices(sample_sourcefile, sample_prices, source_after_price):
     sf = app.set_prices(sample_sourcefile, sample_prices)
     assert sf == source_after_price
 
-    excepted_total = [2, 3]
+    excepted_total = [2, 3, 160]
     actually_total = []
     for book in sf.books:
         total = book.get_total_price()
@@ -41,13 +41,13 @@ def test_set_prices(sample_sourcefile, sample_prices, source_after_price):
 
 def test_get_total_sold_price(sample_sourcefile, sample_prices):
     sf = app.set_prices(sample_sourcefile, sample_prices)
-    excepted = int(2 * 0.8 + 3 * 1.0)
+    excepted = int(2 * 0.8 + 3 * 1.0 + 10 * 16)
     assert app.get_total_sold_price(sf) == excepted
 
 
 def test_get_total_buy_price(sample_sourcefile, sample_prices):
     sf = app.set_prices(sample_sourcefile, sample_prices)
-    excepted = int((2 * 0.8) * 0.5) + int((3 * 1.0) * 0.5)
+    excepted = int((2 * 0.8) * 0.5) + int((3 * 1.0) * 0.5) + int((10 * 16) * 0.5)
     assert app.get_total_buy_price(sf) == excepted
 
 

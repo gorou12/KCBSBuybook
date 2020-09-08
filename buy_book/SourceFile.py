@@ -21,7 +21,10 @@ class SourceFile():
         )
         if('books' in _dict):
             for _book in _dict['books']:
-                self.books.append(Book(_book))
+                if _book["item_type"] == "enchanted_book":
+                    self.books.append(Book(_book))
+                elif _book["item_type"] == "eco_egg":
+                    self.books.append(EcoEgg(_book))
 
     def __repr__(self):
         return "buy_book.SourceFile(created_date: " +\
@@ -55,7 +58,59 @@ class SourceFile():
         return self.total_buy_price
 
 
+class EcoEgg():
+    item_type = "eco_egg"
+    total_price: int = 0
+    unit_price: int = 0
+    japanese: str = ""
+    count: int = 0
+
+    def __init__(self, _dict: dict):
+        super().__init__()
+        self.count = _dict.get('count', -1)
+
+    def __repr__(self):
+        return "buy_book.EcoEgg(count: " +\
+               str(self.count) +\
+               ")"
+
+    def __eq__(self, other):
+        if not isinstance(other, EcoEgg):
+            return NotImplemented
+        return (self.count == other.count)
+
+    def __hash__(self):
+        return hash((self.count))
+
+    def set_prices(self, price_list: list):
+        for item in price_list:
+            if "eco_egg" != item['id']:
+                continue
+            self.unit_price = item['price'][0]
+            self.japanese = item.get('japanese', "")
+        return self
+
+    def get_total_price(self) -> int:
+        if self.total_price != 0:
+            return self.total_price
+        self.total_price = self.unit_price * self.count
+        return self.total_price
+
+    def get_sold_price(self) -> int:
+        if self.total_price == 0:
+            self.get_total_price()
+        multiply: float = 1
+        return int(self.total_price * multiply)
+
+    def get_buy_price(self) -> int:
+        if self.total_price == 0:
+            self.get_total_price()
+        multiply: float = 1
+        return int(self.total_price * multiply * BUY_PRICE_MULTIPLIER)
+
+
 class Book():
+    item_type = "enchanted_book"
     repair_times: int = -1
     enchantments: list = []
     total_price: int = 0
