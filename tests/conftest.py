@@ -9,7 +9,13 @@ from buy_book.SourceFile import SourceFile
 def sample_object():
     bucket_name = 'kcbs-buy-book-kcbsjsoninputbucket'
     object_key = '200501_180827_505.json'
-    body = '{"created_date": "2020-05-01 18:42:24","books": [{"item_type":"enchanted_book","repair_times": 1,"enchantments": [{"enchantment": "minecraft:protection","level": 2},{"enchantment": "minecraft:sharpness","level": 2}]},{"item_type":"enchanted_book","repair_times": 0,"enchantments": [{"enchantment": "minecraft:blast_protection","level": 2}]},{"item_type":"eco_egg","count":16}]}'
+    body = ('{"created_date": "2020-05-01 18:42:24",'
+            '"books": [{"item_type":"enchanted_book","repair_times": 1,'
+            '"enchantments": [{"enchantment": "minecraft:protection",'
+            '"level": 2},{"enchantment": "minecraft:sharpness",'
+            '"level": 2}]},{"item_type":"enchanted_book","repair_times": 0,'
+            '"enchantments": [{"enchantment": "minecraft:blast_protection",'
+            '"level": 2}]},{"item_type":"eco_egg","count":16}]}')
     yield bucket_name, object_key, body
 
 
@@ -34,7 +40,8 @@ def s3event(sample_object):
                 },
                 "responseElements": {
                     "x-amz-request-id": "EXAMPLE123456789",
-                    "x-amz-id-2": "EXAMPLE123/5678abcdefghijklambdaisawesome/mnopqrstuvwxyzABCDEFGH"
+                    "x-amz-id-2": ("EXAMPLE123/5678abcdefghijklambdaisawesome"
+                                   "/mnopqrstuvwxyzABCDEFGH")
                 },
                 "s3": {
                     "s3SchemaVersion": "1.0",
