@@ -24,7 +24,7 @@ Resources:
           Properties:
             Bucket: !Ref KCBSJsonInputBucket
             Events: "s3:ObjectCreated:*"
-      Role: !GetAtt KCBSBuyBookRole.Arn
+      Role: !GetAtt KCBSCalculateRole.Arn
 
   KCBSDiscordNotification:
     Type: AWS::Serverless::Function
@@ -39,7 +39,7 @@ Resources:
           Type: SNS
           Properties:
             Topic: !Ref KCBSCalculationCompleted
-      Role: !GetAtt KCBSBuyBookRole.Arn
+      Role: !GetAtt KCBSDiscordRole.Arn
 
   KCBSJsonInputBucket:
     Type: AWS::S3::Bucket
@@ -54,7 +54,7 @@ Resources:
   KCBSCalculationCompleted:
     Type: AWS::SNS::Topic
 
-  KCBSBuyBookRole:
+  KCBSCalculateRole:
     Type: 'AWS::IAM::Role'
     Properties:
       AssumeRolePolicyDocument:
@@ -70,3 +70,32 @@ Resources:
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
         - 'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
+        - !Ref KCBSPublishCalculatedPolicy
+
+  KCBSDiscordRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
+
+#--------
+  KCBSPublishCalculatedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Action: sns:Publish
+            Resource: !Ref KCBSCalculationCompleted
