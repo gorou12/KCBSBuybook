@@ -8,15 +8,15 @@ Globals:
     Timeout: 3
 
 Resources:
-  KCBSBuyBookFunction:
+  KCBSCalculateFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      Handler: buy_book.app.lambda_handler
+      Handler: buy_book.calculate.lambda_handler
       Runtime: python3.8
       Environment:
         Variables:
-          OUTPUT_BUCKET_NAME: !Ref KCBSOutputBucket
-          OUTPUT_BUCKET_ENDPOINT: !GetAtt KCBSOutputBucket.DomainName
+          OUTPUT_BUCKET_NAME: !Ref KCBSReceipt
+          OUTPUT_BUCKET_ENDPOINT: !GetAtt KCBSReceipt.DomainName
           DISCORD_ENDPOINT: '{{resolve:ssm:kcbsbuybook.discordendpoint:1}}'
       Events:
         JSONInput:
@@ -31,7 +31,7 @@ Resources:
     Properties:
       AccessControl: Private
 
-  KCBSOutputBucket:
+  KCBSReceipt:
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: PublicRead
