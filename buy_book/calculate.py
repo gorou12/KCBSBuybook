@@ -2,7 +2,6 @@ import os
 import json
 import time
 import boto3
-import requests
 from datetime import datetime
 
 from buy_book.SourceFile import SourceFile
@@ -123,20 +122,16 @@ def put_to_bucket(content: str) -> str:
 
 
 def send_to_discord(sold_price: int, buy_price: int, url: str):
-    endpoint = os.environ['DISCORD_ENDPOINT']
     msg = (f"計算終了しました。\r"
            f"販売点数：{sold_price}\r"
            f"買取点数：{buy_price}\r"
            f"詳細：{url}")
-    headers = {
-        "Content-Type": "application/json"
-    }
-    content = {
-        "content": msg
-    }
 
-    body = requests.post(url=endpoint,
-                         data=json.dumps(content).encode(),
-                         headers=headers)
+    sns = boto3.resource('sns')
+    topic = sns.Topic(os.environ['OUTPUT_SNS_ARN'])
+
+    body = topic.publish(
+        Message=msg
+    )
 
     return body
