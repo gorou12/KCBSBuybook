@@ -26,6 +26,21 @@ Resources:
             Events: "s3:ObjectCreated:*"
       Role: !GetAtt KCBSCalculateRole.Arn
 
+  KCBSCalculatedNotification:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: buy_book.calculatednotification.lambda_handler
+      Runtime: python3.8
+      Environment:
+        Variables:
+          OUTPUT_SNS_ARN: !Ref KCBSPostDiscordTopic
+      Events:
+        Topic:
+          Type: SNS
+          Properties:
+            Topic: !Ref KCBSCalculationCompleted
+      Role: !GetAtt KCBSCalculatedNotificationRole.Arn
+
   KCBSDiscordNotification:
     Type: AWS::Serverless::Function
     Properties:
@@ -35,11 +50,11 @@ Resources:
         Variables:
           DISCORD_ENDPOINT: '{{resolve:ssm:kcbsbuybook.discordendpoint:1}}'
       Events:
-        Calculated:
+        Topic:
           Type: SNS
           Properties:
-            Topic: !Ref KCBSCalculationCompleted
-      Role: !GetAtt KCBSDiscordRole.Arn
+            Topic: !Ref KCBSPostDiscordTopic
+      Role: !GetAtt KCBSDiscordNotificationRole.Arn
 
   KCBSJsonInputBucket:
     Type: AWS::S3::Bucket
@@ -52,6 +67,9 @@ Resources:
       AccessControl: PublicRead
 
   KCBSCalculationCompleted:
+    Type: AWS::SNS::Topic
+
+  KCBSPostDiscordTopic:
     Type: AWS::SNS::Topic
 
   KCBSCalculateRole:
@@ -72,7 +90,24 @@ Resources:
         - 'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
         - !Ref KCBSPublishCalculatedPolicy
 
-  KCBSDiscordRole:
+  KCBSCalculatedNotificationRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
+        - !Ref KCBSPublishPostDiscordPolicy
+
+  KCBSDiscordNotificationRole:
     Type: 'AWS::IAM::Role'
     Properties:
       AssumeRolePolicyDocument:
@@ -99,3 +134,14 @@ Resources:
             Effect: Allow
             Action: sns:Publish
             Resource: !Ref KCBSCalculationCompleted
+
+  KCBSPublishPostDiscordPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Action: sns:Publish
+            Resource: !Ref KCBSPostDiscordTopic

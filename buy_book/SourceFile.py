@@ -1,3 +1,4 @@
+import json
 import datetime
 import itertools
 
@@ -57,6 +58,20 @@ class SourceFile():
             self.total_buy_price = sum([i.get_buy_price() for i in self.books])
         return self.total_buy_price
 
+    def get_dict(self) -> dict:
+        self.get_total_sold_price()
+        self.get_total_buy_price()
+        return self.to_dict()
+
+    def to_dict(self) -> dict:
+        return {
+            "created_date": self.created_date,
+            "books": [b.to_dict() for b in self.books],
+            "price_meta": self.price_meta,
+            "total_sold_price": self.total_sold_price,
+            "total_buy_price": self.total_buy_price
+        }
+
 
 class EcoEgg():
     item_type = "eco_egg"
@@ -107,6 +122,15 @@ class EcoEgg():
             self.get_total_price()
         multiply: float = 1
         return int(self.total_price * multiply * BUY_PRICE_MULTIPLIER)
+
+    def to_dict(self) -> dict:
+        return {
+            "item_type": self.item_type,
+            "total_price": self.total_price,
+            "unit_price": self.unit_price,
+            "japanese": self.japanese,
+            "count": self.count
+        }
 
 
 class Book():
@@ -168,6 +192,14 @@ class Book():
         multiply: float = 1 if (self.repair_times == 0) else self.repair_times * REPAIR_TIMES_MULTIPLIER
         return int(self.total_price * multiply * BUY_PRICE_MULTIPLIER)
 
+    def to_dict(self) -> dict:
+        return {
+            "item_type": self.item_type,
+            "repair_times": self.repair_times,
+            "enchantments": [e.to_dict() for e in self.enchantments],
+            "total_price": self.total_price
+        }
+
 
 class Enchantment:
     namespaced_id: str = ""
@@ -213,3 +245,21 @@ class Enchantment:
 
     def get_price(self):
         return self.price
+
+    def to_dict(self) -> dict:
+        return {
+            "namespaced_id": self.namespaced_id,
+            "level": self.level,
+            "price": self.price,
+            "fit_tool": self.fit_tool,
+            "japanese": self.japanese,
+        }
+
+
+class SourceFileJsonEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, SourceFile):
+            return o.to_dict()
+        if isinstance(o, datetime.datetime):
+            return o.isoformat()
+        return super(SourceFileJsonEncoder, self).default(o)

@@ -38,6 +38,7 @@ def test_set_prices(sample_sourcefile, sample_prices, source_after_price):
         total = book.get_total_price()
         actually_total.append(total)
     assert actually_total == excepted_total
+    assert False
 
 
 def test_get_total_sold_price(sample_sourcefile, sample_prices):

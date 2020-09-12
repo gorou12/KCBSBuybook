@@ -2,9 +2,8 @@ import os
 import json
 import time
 import boto3
-from datetime import datetime
 
-from buy_book.SourceFile import SourceFile
+from buy_book.SourceFile import SourceFile, SourceFileJsonEncoder
 
 client = boto3.client('s3')
 prices_json_path = "buy_book/data/prices.json"
@@ -17,10 +16,8 @@ def lambda_handler(event, context):
     sourceFile = read_json(json_str)
     prices = get_prices(prices_json_path)
     sourceFile = set_prices(sourceFile, prices)
-    receipt, sold_p, buy_p = create_receipt(sourceFile)
-    _, url = put_to_bucket(receipt)
 
-    send_to_discord(sold_p, buy_p, url)
+    send_to_discord(sourceFile)
 
     return
 
@@ -72,41 +69,6 @@ def get_total_buy_price(sf: SourceFile) -> int:
     return sf.get_total_buy_price()
 
 
-def create_receipt(sf: SourceFile) -> str:
-    created_date = datetime.strftime(sf.created_date, "%Y-%m-%d %H:%M")
-    metadata_date = sf.price_meta.get('date')
-    total_sold = get_total_sold_price(sf)
-    total_buy = get_total_buy_price(sf)
-
-    receipt_l = [
-        f"読み取り日時：{created_date}",
-        f"適用価格日付：{metadata_date}",
-        f"",
-        f"＜ 読 取 ＞",
-        f"合計販売点：{total_sold}点",
-        f"合計買取点：{total_buy}点",
-        f"※買取点は10点で1ダイヤ相当です",
-        f"--------内訳",
-    ]
-
-    for book in sf.books:
-        if book.item_type == "enchanted_book":
-            enc_l = [i.japanese + str(i.level) for i in book.enchantments]
-            sold_price = book.get_sold_price()
-            repair_times = book.repair_times
-            receipt_l.append(", ".join(enc_l))
-            receipt_l.append(f"└ 合成：{repair_times}回, 基礎点：{sold_price}点")
-        elif book.item_type == "eco_egg":
-            sold_price = book.get_sold_price()
-            count = book.count
-            receipt_l.append(book.japanese)
-            receipt_l.append(f"└ 冊数：{count}冊, 基礎点：{sold_price}点")
-
-    receipt_l.append("--------以上")
-
-    return '\r\n'.join(receipt_l), total_sold, total_buy
-
-
 def put_to_bucket(content: str) -> str:
     bucket = os.environ['OUTPUT_BUCKET_NAME']
     url = os.environ['OUTPUT_BUCKET_ENDPOINT']
@@ -121,11 +83,9 @@ def put_to_bucket(content: str) -> str:
     return key, f"https://{url}/{key}"
 
 
-def send_to_discord(sold_price: int, buy_price: int, url: str):
-    msg = (f"計算終了しました。\r"
-           f"販売点数：{sold_price}\r"
-           f"買取点数：{buy_price}\r"
-           f"詳細：{url}")
+def send_to_discord(sf: SourceFile):
+    d = sf.get_dict()
+    msg = json.dumps(d, cls=SourceFileJsonEncoder, ensure_ascii=False)
 
     sns = boto3.resource('sns')
     topic = sns.Topic(os.environ['OUTPUT_SNS_ARN'])
