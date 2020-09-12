@@ -37,8 +37,8 @@ class SourceFile():
     def __eq__(self, other):
         if not isinstance(other, SourceFile):
             return NotImplemented
-        return (self.created_date == other.created_date
-                and self.books == other.books)
+        return (self.created_date == other.created_date and
+                self.books == other.books)
 
     def __hash__(self):
         return hash((self.created_date, self.books))
@@ -50,7 +50,8 @@ class SourceFile():
 
     def get_total_sold_price(self) -> int:
         if self.total_sold_price == 0:
-            self.total_sold_price = sum([i.get_sold_price() for i in self.books])
+            self.total_sold_price = sum(
+                [i.get_sold_price() for i in self.books])
         return self.total_sold_price
 
     def get_total_buy_price(self) -> int:
@@ -158,14 +159,15 @@ class Book():
     def __eq__(self, other):
         if not isinstance(other, Book):
             return NotImplemented
-        return (self.repair_times == other.repair_times
-                and self.enchantments == other.enchantments)
+        return (self.repair_times == other.repair_times and
+                self.enchantments == other.enchantments)
 
     def __hash__(self):
         return hash((self.repair_times, self.enchantments))
 
     def set_prices(self, price_list: list):
-        self.enchantments = [i.set_price(price_list) for i in self.enchantments]
+        self.enchantments = [i.set_price(price_list)
+                             for i in self.enchantments]
         return self
 
     def get_total_price(self) -> int:
@@ -183,13 +185,17 @@ class Book():
     def get_sold_price(self) -> int:
         if self.total_price == 0:
             self.get_total_price()
-        multiply: float = 1 if (self.repair_times == 0) else self.repair_times * REPAIR_TIMES_MULTIPLIER
+        multiply: float = 1 if (
+            self.repair_times == 0)\
+            else self.repair_times * REPAIR_TIMES_MULTIPLIER
         return int(self.total_price * multiply)
 
     def get_buy_price(self) -> int:
         if self.total_price == 0:
             self.get_total_price()
-        multiply: float = 1 if (self.repair_times == 0) else self.repair_times * REPAIR_TIMES_MULTIPLIER
+        multiply: float = 1 if (
+            self.repair_times == 0)\
+            else self.repair_times * REPAIR_TIMES_MULTIPLIER
         return int(self.total_price * multiply * BUY_PRICE_MULTIPLIER)
 
     def to_dict(self) -> dict:
@@ -227,11 +233,15 @@ class Enchantment:
     def __eq__(self, other):
         if not isinstance(other, Enchantment):
             return NotImplemented
-        return (self.namespaced_id == other.namespaced_id
-                and self.level == other.level)
+        return (self.namespaced_id == other.namespaced_id and
+                self.level == other.level)
 
     def __hash__(self):
-        return hash((self.namespaced_id, self.level, self.price, self.fit_tool))
+        return hash(
+            (self.namespaced_id,
+             self.level,
+             self.price,
+             self.fit_tool))
 
     def set_price(self, price_list: list):
         this_id = self.namespaced_id.split(":")[1]

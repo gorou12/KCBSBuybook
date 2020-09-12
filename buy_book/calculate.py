@@ -1,11 +1,9 @@
 import os
 import json
-import time
 import boto3
 
 from buy_book.SourceFile import SourceFile, SourceFileJsonEncoder
 
-client = boto3.client('s3')
 prices_json_path = "buy_book/data/prices.json"
 
 
@@ -17,7 +15,8 @@ def lambda_handler(event, context):
     prices = get_prices(prices_json_path)
     sourceFile = set_prices(sourceFile, prices)
 
-    send_to_discord(sourceFile)
+    d = get_dict(sourceFile)
+    send_to_discord(d)
 
     return
 
@@ -61,30 +60,11 @@ def set_prices(sf: SourceFile, prices: dict) -> SourceFile:
     return sf.set_prices(prices)
 
 
-def get_total_sold_price(sf: SourceFile) -> int:
-    return sf.get_total_sold_price()
+def get_dict(sf: SourceFile) -> dict:
+    return sf.get_dict()
 
 
-def get_total_buy_price(sf: SourceFile) -> int:
-    return sf.get_total_buy_price()
-
-
-def put_to_bucket(content: str) -> str:
-    bucket = os.environ['OUTPUT_BUCKET_NAME']
-    url = os.environ['OUTPUT_BUCKET_ENDPOINT']
-    key = str(int(time.time())) + ".txt"
-
-    s3_resource = boto3.resource('s3')
-    obj = s3_resource.Object(bucket, key)
-    obj.put(Body=content,
-            ACL='public-read',
-            ContentType='text/plain;charset=utf-8')
-
-    return key, f"https://{url}/{key}"
-
-
-def send_to_discord(sf: SourceFile):
-    d = sf.get_dict()
+def send_to_discord(d: dict):
     msg = json.dumps(d, cls=SourceFileJsonEncoder, ensure_ascii=False)
 
     sns = boto3.resource('sns')

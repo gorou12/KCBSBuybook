@@ -274,21 +274,77 @@ def source_after_price():
 
 
 @pytest.fixture
+def example_created_message():
+    yield {
+        "created_date": "2020-05-01T18:42:24",
+        "books": [
+            {
+                "item_type": "enchanted_book",
+                "repair_times": 1,
+                "enchantments": [
+                    {
+                        "enchantment": "minecraft:protection",
+                        "level": 2,
+                        "price": 1,
+                        "fit_tool": ["A"],
+                        "japanese": "ダメージ軽減"
+                    },
+                    {
+                        "enchantment": "minecraft:sharpness",
+                        "level": 2,
+                        "price": 2,
+                        "fit_tool": ["B"],
+                        "japanese": "ダメージ増加"
+                    }
+                ],
+                "total_price": 1
+            },
+            {
+                "item_type": "enchanted_book",
+                "repair_times": 0,
+                "enchantments": [
+                    {
+                        "enchantment": "minecraft:blast_protection",
+                        "level": 2,
+                        "price": 3,
+                        "fit_tool": ["A", "C"],
+                        "japanese": "爆発耐性"
+                    }
+                ],
+                "total_price": 3
+            },
+            {
+                "item_type": "eco_egg",
+                "count": 16,
+                "unit_price": 10,
+                "total_price": 160,
+                "japanese": "魔道書「えこたまご」"
+            }
+        ],
+        "price_meta": {
+            "version": "0.1",
+            "date": "20200101"
+        },
+        "total_sold_price": 164,
+        "total_buy_price": 81
+    }
+
+
+@pytest.fixture
 def example_receipt():
     yield '\r\n'.join([
         "読み取り日時：2020-05-01 18:42",
-        "適用価格日付：20200101",
+        "　　適用価格：20200101",
         "",
-        "＜ 読 取 ＞",
-        "合計販売点：164点",
+        "＜ 買 取 ＞",
         "合計買取点：81点",
-        "※買取点は10点で1ダイヤ相当です",
+        "※10点で1ダイヤ粒です",
         "--------内訳",
         "ダメージ軽減2, ダメージ増加2",
-        "└ 合成：1回, 基礎点：1点",
+        "└ 合成：1回, 単価：1点",
         "爆発耐性2",
-        "└ 合成：0回, 基礎点：3点",
-        "魔道書「えこたまご」",
-        "└ 冊数：16冊, 基礎点：160点",
+        "└ 合成：0回, 単価：3点",
+        "魔道書「えこたまご」 *16",
+        "└ 単価：160点",
         "--------以上"
     ])
