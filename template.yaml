@@ -59,6 +59,23 @@ Resources:
             Topic: !Ref KCBSCalculationCompleted
       Role: !GetAtt KCBSPrintReceiptRole.Arn
 
+  KCBSMakeChestMap:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: buy_book.makechestmap.lambda_handler
+      Runtime: python3.8
+      Environment:
+        Variables:
+          OUTPUT_BUCKET_NAME: !Ref KCBSChestMap
+          OUTPUT_BUCKET_ENDPOINT: !GetAtt KCBSChestMap.DomainName
+          OUTPUT_SNS_ARN: !Ref KCBSPostDiscordTopic
+      Events:
+        Topic:
+          Type: SNS
+          Properties:
+            Topic: !Ref KCBSCalculationCompleted
+      Role: !GetAtt KCBSMakeChestMapRole.Arn
+
   KCBSDiscordNotification:
     Type: AWS::Serverless::Function
     Properties:
@@ -85,6 +102,13 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: PublicRead
+
+  KCBSChestMap:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
 
 ## --- SNS Topic
 
@@ -148,6 +172,24 @@ Resources:
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
         # - !Ref KCBSReceiptPutObjectPolicy
+        - 'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
+        - !Ref KCBSPublishPostDiscordPolicy
+
+  KCBSMakeChestMapRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
         - 'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
         - !Ref KCBSPublishPostDiscordPolicy
 
