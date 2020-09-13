@@ -8,6 +8,9 @@ Globals:
     Timeout: 3
 
 Resources:
+
+## --- Lambda Function
+
   KCBSCalculateFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -15,16 +18,63 @@ Resources:
       Runtime: python3.8
       Environment:
         Variables:
-          OUTPUT_BUCKET_NAME: !Ref KCBSReceipt
-          OUTPUT_BUCKET_ENDPOINT: !GetAtt KCBSReceipt.DomainName
-          DISCORD_ENDPOINT: '{{resolve:ssm:kcbsbuybook.discordendpoint:1}}'
+          OUTPUT_SNS_ARN: !Ref KCBSCalculationCompleted
       Events:
         JSONInput:
           Type: S3 # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Bucket: !Ref KCBSJsonInputBucket
             Events: "s3:ObjectCreated:*"
-      Role: !GetAtt KCBSBuyBookRole.Arn
+      Role: !GetAtt KCBSCalculateRole.Arn
+
+  KCBSCalculatedNotification:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: buy_book.calculatednotification.lambda_handler
+      Runtime: python3.8
+      Environment:
+        Variables:
+          OUTPUT_SNS_ARN: !Ref KCBSPostDiscordTopic
+      Events:
+        Topic:
+          Type: SNS
+          Properties:
+            Topic: !Ref KCBSCalculationCompleted
+      Role: !GetAtt KCBSCalculatedNotificationRole.Arn
+
+  KCBSPrintReceipt:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: buy_book.printreceipt.lambda_handler
+      Runtime: python3.8
+      Environment:
+        Variables:
+          OUTPUT_BUCKET_NAME: !Ref KCBSReceipt
+          OUTPUT_BUCKET_ENDPOINT: '{{resolve:ssm:kcbsbuybook.receiptdomain:3}}'
+          OUTPUT_SNS_ARN: !Ref KCBSPostDiscordTopic
+      Events:
+        Topic:
+          Type: SNS
+          Properties:
+            Topic: !Ref KCBSCalculationCompleted
+      Role: !GetAtt KCBSPrintReceiptRole.Arn
+
+  KCBSDiscordNotification:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: buy_book.discordnotification.lambda_handler
+      Runtime: python3.8
+      Environment:
+        Variables:
+          DISCORD_ENDPOINT: '{{resolve:ssm:kcbsbuybook.discordendpoint:1}}'
+      Events:
+        Topic:
+          Type: SNS
+          Properties:
+            Topic: !Ref KCBSPostDiscordTopic
+      Role: !GetAtt KCBSDiscordNotificationRole.Arn
+
+## --- S3 Bucket
 
   KCBSJsonInputBucket:
     Type: AWS::S3::Bucket
@@ -36,7 +86,53 @@ Resources:
     Properties:
       AccessControl: PublicRead
 
-  KCBSBuyBookRole:
+## --- SNS Topic
+
+  KCBSCalculationCompleted:
+    Type: AWS::SNS::Topic
+
+  KCBSPostDiscordTopic:
+    Type: AWS::SNS::Topic
+
+## --- IAM Role
+
+  KCBSCalculateRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+        # - !Ref KCBSInputGetObjectPolicy
+        - !Ref KCBSPublishCalculatedPolicy
+
+  KCBSCalculatedNotificationRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
+        - !Ref KCBSPublishPostDiscordPolicy
+
+  KCBSPrintReceiptRole:
     Type: 'AWS::IAM::Role'
     Properties:
       AssumeRolePolicyDocument:
@@ -51,4 +147,68 @@ Resources:
               - "sts:AssumeRole"
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+        # - !Ref KCBSReceiptPutObjectPolicy
         - 'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
+        - !Ref KCBSPublishPostDiscordPolicy
+
+  KCBSDiscordNotificationRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
+
+## --- IAM Policy
+
+  KCBSInputGetObjectPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Action: s3:GetObject
+            Resource: !GetAtt KCBSJsonInputBucket.Arn
+
+  KCBSPublishCalculatedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Action: sns:Publish
+            Resource: !Ref KCBSCalculationCompleted
+
+  KCBSReceiptPutObjectPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Action: s3:PutObject
+            Resource: !GetAtt KCBSReceipt.Arn
+
+  KCBSPublishPostDiscordPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Action: sns:Publish
+            Resource: !Ref KCBSPostDiscordTopic

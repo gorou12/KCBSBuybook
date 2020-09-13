@@ -8,7 +8,7 @@ def test_get_objectinfo(s3event):
         (
             s3event['Records'][0]['s3']['bucket']['name'],
             s3event['Records'][0]['s3']['object']['key']
-        )
+    )
 
 
 def test_get_object(s3_setup):
@@ -40,30 +40,12 @@ def test_set_prices(sample_sourcefile, sample_prices, source_after_price):
     assert actually_total == excepted_total
 
 
-def test_get_total_sold_price(sample_sourcefile, sample_prices):
+def test_get_dict(sample_sourcefile, sample_prices):
     sf = calculate.set_prices(sample_sourcefile, sample_prices)
-    excepted = int(2 * 0.8 + 3 * 1.0 + 10 * 16)
-    assert calculate.get_total_sold_price(sf) == excepted
-
-
-def test_get_total_buy_price(sample_sourcefile, sample_prices):
-    sf = calculate.set_prices(sample_sourcefile, sample_prices)
-    excepted = int((2 * 0.8) * 0.5) +\
+    excepted_sold = int(2 * 0.8 + 3 * 1.0 + 10 * 16)
+    excepted_buy = int((2 * 0.8) * 0.5) +\
         int((3 * 1.0) * 0.5) +\
         int((10 * 16) * 0.5)
-    assert calculate.get_total_buy_price(sf) == excepted
-
-
-def test_create_receipt(sample_sourcefile, sample_prices, example_receipt):
-    sf = calculate.set_prices(sample_sourcefile, sample_prices)
-    actually, _, _ = calculate.create_receipt(sf)
-    assert actually == example_receipt
-
-
-def test_put_to_bucket(put_s3_setup):
-    os.environ['OUTPUT_BUCKET_NAME'] = "KCBSOutputBucket"
-    os.environ['OUTPUT_BUCKET_ENDPOINT'] = "example.com"
-    example_content = "hogehoge"
-    key, _ = calculate.put_to_bucket("hogehoge")
-    obj = put_s3_setup.Object(key).get()
-    assert obj['Body'].read().decode('utf-8') == example_content
+    actually = calculate.get_dict(sf)
+    assert actually["total_sold_price"] == excepted_sold
+    assert actually["total_buy_price"] == excepted_buy

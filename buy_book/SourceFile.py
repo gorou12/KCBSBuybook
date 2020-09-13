@@ -1,3 +1,4 @@
+import json
 import datetime
 import itertools
 
@@ -36,8 +37,8 @@ class SourceFile():
     def __eq__(self, other):
         if not isinstance(other, SourceFile):
             return NotImplemented
-        return (self.created_date == other.created_date
-                and self.books == other.books)
+        return (self.created_date == other.created_date and
+                self.books == other.books)
 
     def __hash__(self):
         return hash((self.created_date, self.books))
@@ -49,13 +50,28 @@ class SourceFile():
 
     def get_total_sold_price(self) -> int:
         if self.total_sold_price == 0:
-            self.total_sold_price = sum([i.get_sold_price() for i in self.books])
+            self.total_sold_price = sum(
+                [i.get_sold_price() for i in self.books])
         return self.total_sold_price
 
     def get_total_buy_price(self) -> int:
         if self.total_buy_price == 0:
             self.total_buy_price = sum([i.get_buy_price() for i in self.books])
         return self.total_buy_price
+
+    def get_dict(self) -> dict:
+        self.get_total_sold_price()
+        self.get_total_buy_price()
+        return self.to_dict()
+
+    def to_dict(self) -> dict:
+        return {
+            "created_date": self.created_date,
+            "books": [b.to_dict() for b in self.books],
+            "price_meta": self.price_meta,
+            "total_sold_price": self.total_sold_price,
+            "total_buy_price": self.total_buy_price
+        }
 
 
 class EcoEgg():
@@ -108,6 +124,15 @@ class EcoEgg():
         multiply: float = 1
         return int(self.total_price * multiply * BUY_PRICE_MULTIPLIER)
 
+    def to_dict(self) -> dict:
+        return {
+            "item_type": self.item_type,
+            "total_price": self.total_price,
+            "unit_price": self.unit_price,
+            "japanese": self.japanese,
+            "count": self.count
+        }
+
 
 class Book():
     item_type = "enchanted_book"
@@ -134,14 +159,15 @@ class Book():
     def __eq__(self, other):
         if not isinstance(other, Book):
             return NotImplemented
-        return (self.repair_times == other.repair_times
-                and self.enchantments == other.enchantments)
+        return (self.repair_times == other.repair_times and
+                self.enchantments == other.enchantments)
 
     def __hash__(self):
         return hash((self.repair_times, self.enchantments))
 
     def set_prices(self, price_list: list):
-        self.enchantments = [i.set_price(price_list) for i in self.enchantments]
+        self.enchantments = [i.set_price(price_list)
+                             for i in self.enchantments]
         return self
 
     def get_total_price(self) -> int:
@@ -159,14 +185,26 @@ class Book():
     def get_sold_price(self) -> int:
         if self.total_price == 0:
             self.get_total_price()
-        multiply: float = 1 if (self.repair_times == 0) else self.repair_times * REPAIR_TIMES_MULTIPLIER
+        multiply: float = 1 if (
+            self.repair_times == 0)\
+            else self.repair_times * REPAIR_TIMES_MULTIPLIER
         return int(self.total_price * multiply)
 
     def get_buy_price(self) -> int:
         if self.total_price == 0:
             self.get_total_price()
-        multiply: float = 1 if (self.repair_times == 0) else self.repair_times * REPAIR_TIMES_MULTIPLIER
+        multiply: float = 1 if (
+            self.repair_times == 0)\
+            else self.repair_times * REPAIR_TIMES_MULTIPLIER
         return int(self.total_price * multiply * BUY_PRICE_MULTIPLIER)
+
+    def to_dict(self) -> dict:
+        return {
+            "item_type": self.item_type,
+            "repair_times": self.repair_times,
+            "enchantments": [e.to_dict() for e in self.enchantments],
+            "total_price": self.total_price
+        }
 
 
 class Enchantment:
@@ -195,11 +233,15 @@ class Enchantment:
     def __eq__(self, other):
         if not isinstance(other, Enchantment):
             return NotImplemented
-        return (self.namespaced_id == other.namespaced_id
-                and self.level == other.level)
+        return (self.namespaced_id == other.namespaced_id and
+                self.level == other.level)
 
     def __hash__(self):
-        return hash((self.namespaced_id, self.level, self.price, self.fit_tool))
+        return hash(
+            (self.namespaced_id,
+             self.level,
+             self.price,
+             self.fit_tool))
 
     def set_price(self, price_list: list):
         this_id = self.namespaced_id.split(":")[1]
@@ -213,3 +255,21 @@ class Enchantment:
 
     def get_price(self):
         return self.price
+
+    def to_dict(self) -> dict:
+        return {
+            "namespaced_id": self.namespaced_id,
+            "level": self.level,
+            "price": self.price,
+            "fit_tool": self.fit_tool,
+            "japanese": self.japanese,
+        }
+
+
+class SourceFileJsonEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, SourceFile):
+            return o.to_dict()
+        if isinstance(o, datetime.datetime):
+            return o.isoformat()
+        return super(SourceFileJsonEncoder, self).default(o)
