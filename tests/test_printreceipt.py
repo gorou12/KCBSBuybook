@@ -11,7 +11,19 @@ def test_get_messages(Snsevent):
 def test_generate_message():
     """メッセージからDiscord用テキストを生成できること."""
     url = "http://www.example.com/"
-    excepted = ("レシート：http://www.example.com/")
+    excepted = (
+        "レシート：\n"
+        "アドレスをブラウザに\n"
+        "コピペしてご覧ください\n"
+        "\n"
+        "レシートは一定期間で\n"
+        "削除します\n"
+        "\n"
+        "この本が不要な際は\n"
+        "樽やお近くのチェストに\n"
+        "お入れください\n"
+        "http://www.example.com/"
+    )
     assert printreceipt.generate_message(url) == excepted
 
 

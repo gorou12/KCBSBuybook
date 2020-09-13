@@ -50,7 +50,7 @@ Resources:
       Environment:
         Variables:
           OUTPUT_BUCKET_NAME: !Ref KCBSReceipt
-          OUTPUT_BUCKET_ENDPOINT: !GetAtt KCBSReceipt.DomainName
+          OUTPUT_BUCKET_ENDPOINT: '{{resolve:ssm:kcbsbuybook.receiptdomain:3}}'
           OUTPUT_SNS_ARN: !Ref KCBSPostDiscordTopic
       Events:
         Topic:
@@ -111,6 +111,8 @@ Resources:
               - "sts:AssumeRole"
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+        # - !Ref KCBSInputGetObjectPolicy
         - !Ref KCBSPublishCalculatedPolicy
 
   KCBSCalculatedNotificationRole:
@@ -145,6 +147,7 @@ Resources:
               - "sts:AssumeRole"
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+        # - !Ref KCBSReceiptPutObjectPolicy
         - 'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
         - !Ref KCBSPublishPostDiscordPolicy
 
@@ -166,6 +169,17 @@ Resources:
 
 ## --- IAM Policy
 
+  KCBSInputGetObjectPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Action: s3:GetObject
+            Resource: !GetAtt KCBSJsonInputBucket.Arn
+
   KCBSPublishCalculatedPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -176,6 +190,17 @@ Resources:
             Effect: Allow
             Action: sns:Publish
             Resource: !Ref KCBSCalculationCompleted
+
+  KCBSReceiptPutObjectPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Action: s3:PutObject
+            Resource: !GetAtt KCBSReceipt.Arn
 
   KCBSPublishPostDiscordPolicy:
     Type: AWS::IAM::ManagedPolicy
